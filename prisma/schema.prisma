@@ -1,0 +1,57 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Una riga per giorno di diario. habits / goalTasks / whoop serializzati JSON
+// (SQLite non ha un tipo JSON nativo in Prisma).
+model Entry {
+  date            String  @id // YYYY-MM-DD
+  noSmoke         Boolean @default(true)
+  cravings        Int     @default(0)
+  alcohol         Int     @default(0)
+  trainingDone    Boolean @default(false)
+  trainingType    String  @default("")
+  trainingMinutes String  @default("")
+  foodQuality     Int     @default(0)
+  meals           String  @default("")
+  habits          String  @default("{}")
+  goalTasks       String  @default("{}")
+  whoopRecovery   String  @default("")
+  whoopSleepH     String  @default("")
+  whoopFcr        String  @default("")
+  whoopVfc        String  @default("")
+  whoopSpo2       String  @default("")
+  mood            Int     @default(3)
+  anxiety         Int     @default(3)
+  notes           String  @default("")
+  updatedAt       DateTime @updatedAt
+}
+
+// Un solo obiettivo attivo alla volta; i chiusi restano come archivio.
+model Goal {
+  id        Int      @id @default(autoincrement())
+  title     String
+  deadline  String // YYYY-MM-DD
+  roadmap   String // JSON: { summary, sections, milestones }
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  closedAt  DateTime?
+}
+
+// Singleton (id = 1): impostazioni + dati finanziari editabili.
+model Settings {
+  id         Int    @id @default(1)
+  quitAt     String @default("2026-08-10T20:00")
+  netSalary  String @default("2028")
+  balance    String @default("1800")
+  investPlan String @default("250")
+  tmaxRate   String @default("250")
+  tfr        String @default("6700")
+  etfs       String @default("S&P 500 · MSCI World · MSCI EM")
+}
