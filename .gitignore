@@ -20,9 +20,6 @@ npm-debug.log*
 .env.local
 .env*.local
 
-# database locale
-prisma/*.db
-prisma/*.db-journal
 
 # typescript
 *.tsbuildinfo

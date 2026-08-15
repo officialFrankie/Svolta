@@ -2,7 +2,7 @@
 
 Il quartier generale personale di Francesco — health & life coaching. Dark, stile Whoop, mobile-first, installabile come PWA su iPhone.
 
-Ricostruzione completa del prototipo `prototype/svolta-v3.tsx` come app vera: Next.js 14 (App Router) + TypeScript + Tailwind, SQLite via Prisma, API Anthropic solo lato server.
+Ricostruzione completa del prototipo `prototype/svolta-v3.tsx` come app vera: Next.js 14 (App Router) + TypeScript + Tailwind, PostgreSQL (Neon) via Prisma, API Anthropic solo lato server.
 
 ## Funzionalità
 
@@ -18,39 +18,24 @@ Ricostruzione completa del prototipo `prototype/svolta-v3.tsx` come app vera: Ne
 
 ```bash
 npm install
-cp .env.example .env.local        # inserisci la tua ANTHROPIC_API_KEY
-echo 'DATABASE_URL="file:./dev.db"' > .env   # Prisma CLI legge .env
-npx prisma migrate dev            # crea il DB SQLite
+cp .env.example .env              # inserisci ANTHROPIC_API_KEY e DATABASE_URL
+npx prisma migrate deploy         # applica le migration al DB Postgres
 npm run dev                       # http://localhost:3000
 ```
 
-La chiave Anthropic vive **solo** in `.env.local` e viene usata **solo** dalla route server `/api/coach` (modello `claude-sonnet-4-6`). Il client non la vede mai.
+Serve un PostgreSQL raggiungibile: il più comodo è un **branch di sviluppo del DB Neon** (dashboard Neon → Branches → copia la connection string), oppure un Postgres locale.
+
+La chiave Anthropic vive **solo** in `.env` e viene usata **solo** dalla route server `/api/coach` (modello `claude-sonnet-4-6`). Il client non la vede mai.
 
 ## Deploy su Vercel
 
-Il filesystem di Vercel è **effimero**: un file SQLite verrebbe azzerato a ogni deploy/cold start. Per questo l'app supporta due modalità con lo stesso schema:
+Il database è **PostgreSQL su Neon** (il filesystem di Vercel è effimero, quindi niente SQLite). Lo script di build esegue `prisma generate`, poi le migration (`scripts/migrate-deploy.mjs` → `prisma migrate deploy`), poi `next build`: a ogni deploy le migration pendenti vengono applicate automaticamente prima della build. Per le migration lo script preferisce la connessione **diretta** (`DATABASE_URL_UNPOOLED`, esposta dall'integrazione Neon) perché l'endpoint pooled (pgbouncer) non supporta gli advisory lock di Prisma Migrate.
 
-- **Locale / server proprio** → SQLite puro (`DATABASE_URL=file:./dev.db`), zero servizi esterni.
-- **Vercel** → Turso (SQLite gestito, piano free): se `TURSO_DATABASE_URL` è presente, `src/lib/prisma.ts` usa l'adapter libSQL automaticamente.
-
-Passi:
-
-1. Crea il DB Turso (una tantum):
-   ```bash
-   turso db create svolta
-   turso db show svolta --url          # → TURSO_DATABASE_URL
-   turso db tokens create svolta       # → TURSO_AUTH_TOKEN
-   turso db shell svolta < prisma/migrations/*/migration.sql
-   ```
-2. Su [vercel.com](https://vercel.com) → **Add New Project** → importa questo repo GitHub. Framework: Next.js (auto).
-3. In **Settings → Environment Variables** aggiungi:
+1. Su [vercel.com](https://vercel.com) il progetto è collegato al repo; la variabile `DATABASE_URL` è già fornita dall'integrazione Neon.
+2. In **Settings → Environment Variables** verifica che ci siano, abilitate per **Production e Preview**:
+   - `DATABASE_URL` (integrazione Neon; con l'integrazione c'è anche `DATABASE_URL_UNPOOLED`, usata per le migration)
    - `ANTHROPIC_API_KEY`
-   - `TURSO_DATABASE_URL`
-   - `TURSO_AUTH_TOKEN`
-   - `DATABASE_URL` = `file:./dev.db` (serve solo a far felice `prisma generate` in build)
-4. Deploy. Fine.
-
-In alternativa, per restare 100% SQLite-file senza servizi esterni: deploy su un host con disco persistente (Fly.io, Railway, un VPS) usando `npm run build && npm start`.
+3. Deploy (o ri-deploy dell'ultimo commit). Fine.
 
 ## Installazione come PWA su iPhone
 
