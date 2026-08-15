@@ -1,15 +1,14 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// Una riga per giorno di diario. habits / goalTasks / whoop serializzati JSON
-// (SQLite non ha un tipo JSON nativo in Prisma).
+// Una riga per giorno di diario. habits / goalTasks serializzati JSON come String
+// per compatibilità con lo schema dati originale (stesso formato dell'app).
 model Entry {
   date            String  @id // YYYY-MM-DD
   noSmoke         Boolean @default(true)
