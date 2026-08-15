@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  background: #101318;
+  color: #f2f5f8;
+  -webkit-tap-highlight-color: transparent;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #5a6675;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid #4a9dff;
+  outline-offset: 2px;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* input date/datetime nativi in dark */
+input[type="date"],
+input[type="datetime-local"] {
+  color-scheme: dark;
+}
