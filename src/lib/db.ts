@@ -1,4 +1,5 @@
 import { prisma } from "./prisma";
+import { ensureSchema } from "./bootstrap";
 import { safeParse } from "./json";
 import {
   DEFAULT_SETTINGS,
@@ -59,6 +60,7 @@ function toRow(e: Entry) {
 }
 
 export async function getAllEntries(): Promise<Record<string, Entry>> {
+  await ensureSchema();
   const rows = await prisma.entry.findMany({ orderBy: { date: "asc" } });
   const out: Record<string, Entry> = {};
   for (const r of rows) out[r.date] = toEntry(r);
@@ -66,6 +68,7 @@ export async function getAllEntries(): Promise<Record<string, Entry>> {
 }
 
 export async function upsertEntry(e: Entry): Promise<Entry> {
+  await ensureSchema();
   const row = toRow(e);
   const saved = await prisma.entry.upsert({
     where: { date: e.date },
@@ -88,11 +91,13 @@ export function toGoal(g: DbGoal): Goal {
 }
 
 export async function getActiveGoal(): Promise<Goal | null> {
+  await ensureSchema();
   const g = await prisma.goal.findFirst({ where: { active: true }, orderBy: { id: "desc" } });
   return g ? toGoal(g) : null;
 }
 
 export async function setActiveGoal(title: string, deadline: string, roadmap: Roadmap): Promise<Goal> {
+  await ensureSchema();
   await prisma.goal.updateMany({ where: { active: true }, data: { active: false, closedAt: new Date() } });
   const g = await prisma.goal.create({
     data: { title, deadline, roadmap: JSON.stringify(roadmap), active: true },
@@ -101,12 +106,14 @@ export async function setActiveGoal(title: string, deadline: string, roadmap: Ro
 }
 
 export async function closeActiveGoal(): Promise<void> {
+  await ensureSchema();
   await prisma.goal.updateMany({ where: { active: true }, data: { active: false, closedAt: new Date() } });
 }
 
 /* ---------- Settings (singleton id=1) ---------- */
 
 export async function getSettings(): Promise<Settings> {
+  await ensureSchema();
   const s = await prisma.settings.findUnique({ where: { id: 1 } });
   if (!s) {
     const created = await prisma.settings.create({ data: { id: 1 } });
@@ -116,6 +123,7 @@ export async function getSettings(): Promise<Settings> {
 }
 
 export async function updateSettings(patch: Partial<Settings>): Promise<Settings> {
+  await ensureSchema();
   const clean: Partial<Settings> = {};
   for (const k of ["quitAt", "netSalary", "balance", "investPlan", "tmaxRate", "tfr", "etfs"] as const) {
     if (typeof patch[k] === "string") clean[k] = patch[k];

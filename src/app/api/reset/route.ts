@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { ensureSchema } from "@/lib/bootstrap";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -7,6 +8,7 @@ export const dynamic = "force-dynamic";
 /** Reset completo: diario, obiettivi e impostazioni tornano ai default. */
 export async function POST() {
   try {
+    await ensureSchema();
     await prisma.$transaction([
       prisma.entry.deleteMany(),
       prisma.goal.deleteMany(),
