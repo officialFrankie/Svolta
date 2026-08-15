@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { ensureSchema } from "@/lib/bootstrap";
 import { toEntry, upsertEntry } from "@/lib/db";
 import { emptyEntry, type Entry } from "@/lib/types";
 
@@ -13,6 +14,7 @@ export async function GET(_req: NextRequest, { params }: { params: { date: strin
     return NextResponse.json({ ok: false, error: "Data non valida" }, { status: 400 });
   }
   try {
+    await ensureSchema();
     const row = await prisma.entry.findUnique({ where: { date: params.date } });
     return NextResponse.json({ ok: true, entry: row ? toEntry(row) : emptyEntry(params.date) });
   } catch (e) {
