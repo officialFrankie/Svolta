@@ -29,15 +29,13 @@ La chiave Anthropic vive **solo** in `.env` e viene usata **solo** dalla route s
 
 ## Deploy su Vercel
 
-Il database è **PostgreSQL su Neon** (il filesystem di Vercel è effimero, quindi niente SQLite). Lo script di build esegue `prisma generate && prisma migrate deploy && next build`: a ogni deploy le migration pendenti vengono applicate automaticamente prima della build.
+Il database è **PostgreSQL su Neon** (il filesystem di Vercel è effimero, quindi niente SQLite). Lo script di build esegue `prisma generate`, poi le migration (`scripts/migrate-deploy.mjs` → `prisma migrate deploy`), poi `next build`: a ogni deploy le migration pendenti vengono applicate automaticamente prima della build. Per le migration lo script preferisce la connessione **diretta** (`DATABASE_URL_UNPOOLED`, esposta dall'integrazione Neon) perché l'endpoint pooled (pgbouncer) non supporta gli advisory lock di Prisma Migrate.
 
 1. Su [vercel.com](https://vercel.com) il progetto è collegato al repo; la variabile `DATABASE_URL` è già fornita dall'integrazione Neon.
-2. In **Settings → Environment Variables** verifica che ci siano:
-   - `DATABASE_URL` (integrazione Neon)
+2. In **Settings → Environment Variables** verifica che ci siano, abilitate per **Production e Preview**:
+   - `DATABASE_URL` (integrazione Neon; con l'integrazione c'è anche `DATABASE_URL_UNPOOLED`, usata per le migration)
    - `ANTHROPIC_API_KEY`
 3. Deploy (o ri-deploy dell'ultimo commit). Fine.
-
-Nota: se `DATABASE_URL` punta all'endpoint **pooled** di Neon (host `-pooler`) e `prisma migrate deploy` desse errori in build, usa la connection string **unpooled** (Neon la espone come `DATABASE_URL_UNPOOLED`) come valore di `DATABASE_URL`, oppure aggiungi nello schema un `directUrl` dedicato alle migration.
 
 ## Installazione come PWA su iPhone
 

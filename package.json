@@ -5,7 +5,7 @@
   "description": "SVOLTA — health & life coaching HQ personale di Francesco",
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma migrate deploy && next build",
+    "build": "prisma generate && node scripts/migrate-deploy.mjs && next build",
     "start": "next start",
     "lint": "next lint",
     "db:migrate": "prisma migrate dev",
